@@ -50,6 +50,13 @@ int main(){
     if (status == -1){
         cout << "Error listening to socket: " << strerror(errno) << endl;
     }
-
+    while(1){
+        struct sockaddr client_connection;
+        unsigned int size_client_connection = sizeof client_connection;
+        int connection_fd = accept(socket_fd, &client_connection, &size_client_connection);
+        if (connection_fd == -1){
+            cout << "Error accepting connection: " << strerror(errno) << endl;
+        }
+    }
     return 0;
 };
