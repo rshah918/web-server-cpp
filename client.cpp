@@ -6,10 +6,11 @@
 #include <string.h>
 #include <unistd.h>
 
+
 using namespace std;
 
 int main(){
-    cout << "Starting Server..." << endl;
+    cout << "Starting Client..." << endl;
     // struct that configures our network connection
     struct addrinfo hints;
     /*
@@ -37,51 +38,25 @@ int main(){
     }
     // create socket
     int socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    
-    // bind to the socket
-    // not needed in the client case, the kernel will randomly assign us a local port number to which the servers response will be routed. Only call bind() for the server case
-    status = bind(socket_fd, serverinfo->ai_addr, serverinfo->ai_addrlen);
-    if (status == -1){
-        cout << "Error binding to socket: " << strerror(errno) << endl;
-    }
 
-    // start listening on the socket
-    int pending_connection_queue_size = 2;
-    status = listen(socket_fd, pending_connection_queue_size);
-    if (status == -1){
-        cout << "Error listening to socket: " << strerror(errno) << endl;
+    // connect to remote process
+    status = connect(socket_fd, serverinfo->ai_addr, serverinfo->ai_addrlen);
+    if (status == -1) {
+        cout << "Error connecting to server: " << strerror(errno) << endl;
     }
     while(1){
         struct sockaddr client_connection;
         unsigned int size_client_connection = sizeof client_connection;
-        int connection_fd = accept(socket_fd, &client_connection, &size_client_connection);
-        if (connection_fd == -1){
-            cout << "Error accepting connection: " << strerror(errno) << endl;
+        string message = "hello world";
+        unsigned int bytes_sent = send(socket_fd, &message, sizeof(message), 0);
+        if (bytes_sent == -1){
+            cout << "Error sending message: " << strerror(errno) << endl;
         }
-        //fork a child process for each incoming connection
-        int childpid = fork();
-        if (childpid == -1){
-            cout << "Error forking child process: " << strerror(errno) << endl;
-            close(connection_fd);
-        }
-        if (childpid == 0){
-            while (1)
-            {
-                int buffer_size = 32;
-                void *buffer = malloc(buffer_size);
-                unsigned int size = recv(connection_fd, buffer, buffer_size, 0);
-                if (size == 0){
-                    cout << "Client closed the connection" << endl;
-                    free(buffer);
-                    break;
-                }
-                cout << (char *)buffer << endl;
-                // clear the buffer
-                memset(buffer, '\0', buffer_size);
-            }
-            // close the connection
-            close(connection_fd);
+        else{
+            cout << bytes_sent << " Bytes sent" << endl;
         }
     }
+    close(socket_fd);
+    freeaddrinfo(serverinfo);
     return 0;
 };
