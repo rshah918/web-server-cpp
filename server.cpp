@@ -75,13 +75,15 @@ int main(){
                     free(buffer);
                     break;
                 }
-                cout << (char *)buffer << endl;
-                // clear the buffer
-                memset(buffer, '\0', buffer_size);
+                cout << (char *)buffer;
+                sleep(0.5);
+                // free the buffer
+                free(buffer);
             }
             // close the connection
             close(connection_fd);
         }
     }
+    freeaddrinfo(serverinfo);
     return 0;
 };

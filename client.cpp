@@ -23,13 +23,13 @@ int main(){
     hints.ai_socktype = SOCK_STREAM; // Streaming socket for TCP
     hints.ai_protocol = IPPROTO_TCP; // Use TCP protocol
 
-    struct addrinfo *serverinfo; // Pointer for results
-    int status = getaddrinfo(NULL, "8080", &hints, &serverinfo);
+    struct addrinfo *clientinfo; // Pointer for results
+    int status = getaddrinfo(NULL, "8080", &hints, &clientinfo);
     if (status != 0){
         cout << "error creating struct: " << gai_strerror(status) << endl;
     }
     //print socketaddr structure
-    for (struct addrinfo *p = serverinfo; p != NULL; p = p->ai_next){
+    for (struct addrinfo *p = clientinfo; p != NULL; p = p->ai_next){
         struct sockaddr_in *sock_ipv4 = (struct sockaddr_in*)p->ai_addr; // cast sockaddr to sockaddr_in, as its ipv4 specific
         char ip_address_string[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(sock_ipv4->sin_addr), ip_address_string, sizeof(ip_address_string)); // Convert IP to string and store inside 
@@ -40,15 +40,16 @@ int main(){
     int socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     // connect to remote process
-    status = connect(socket_fd, serverinfo->ai_addr, serverinfo->ai_addrlen);
+    status = connect(socket_fd, clientinfo->ai_addr, clientinfo->ai_addrlen);
     if (status == -1) {
         cout << "Error connecting to server: " << strerror(errno) << endl;
     }
+    // spam the hell out of the server with a bunch of hello worlds
     while(1){
         struct sockaddr client_connection;
         unsigned int size_client_connection = sizeof client_connection;
         string message = "hello world";
-        unsigned int bytes_sent = send(socket_fd, &message, sizeof(message), 0);
+        unsigned int bytes_sent = send(socket_fd, &message, 11, 0);
         if (bytes_sent == -1){
             cout << "Error sending message: " << strerror(errno) << endl;
         }
@@ -56,7 +57,8 @@ int main(){
             cout << bytes_sent << " Bytes sent" << endl;
         }
     }
+    //close socket and addrinfo data structure
     close(socket_fd);
-    freeaddrinfo(serverinfo);
+    freeaddrinfo(clientinfo);
     return 0;
 };
